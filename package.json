@@ -1,0 +1,24 @@
+{
+  "name": "aws-cloud-app",
+  "version": "1.0.0",
+  "description": "A client and server which interacts with a cloud based AWS dynamoDB",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo works",
+    "start": "nodemon server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eoleahy/AWS-Cloud-App.git"
+  },
+  "author": "Eoin Leahy",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/eoleahy/AWS-Cloud-App/issues"
+  },
+  "homepage": "https://github.com/eoleahy/AWS-Cloud-App#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "nodemon": "^1.19.4"
+  }
+}
