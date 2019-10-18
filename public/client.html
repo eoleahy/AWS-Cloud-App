@@ -10,9 +10,13 @@
 
 <body>
     <div id="app">
-        <h1>Weather app</h1>
-        <input v-model="search" placeholder="City">
-        <button v-on:click="searchWeather">Search</button>
+        <h1>AWS Cloud database app</h1>
+        <button v-on:click=this.console.log('Hi')>Create database</button>
+        <br>
+        <input v-model="search" placeholder="Movie Name">
+        <button v-on:click=this.console.log('Hi')>Query database</button>
+        <br>
+        <button v-on:click=this.console.log('Hi')>Delete database</button>
         <template>
         </template>
 
@@ -23,6 +27,7 @@
             el: '#app',
             data: {
                 message: "Hello test",
+                search: ""
             }
         })
     </script>
