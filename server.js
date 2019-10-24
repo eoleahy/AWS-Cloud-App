@@ -4,12 +4,16 @@ const express = require("express");
 const AWS = require("aws-sdk");
 const fs = require("fs");
 const path = require("path");
+const os = require("os");
+
+
 AWS.config.update({region:"eu-west-1"});
 
 let s3 = new AWS.S3({apiVersion:"2006-03-01"});
 
 const app = express();
 const port = 3000;
+const host = os.hostname();
 let publicPath = path.resolve(__dirname, "public");
 app.use(express.static(publicPath));
 
@@ -19,7 +23,7 @@ app.get('/', (req, res) => res.sendFile(publicPath + "/client.html"));
 //app.get('/:location',  getWeather);
 
 
-app.listen(port, () => console.log(`To view webpage visit localhost:${port}`));
+app.listen(port, () => console.log(`To view webpage visit ${host}:${port}`));
 
 function sendWeather(req, res) {
     let loc = req.params['location'];
