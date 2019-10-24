@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/eoleahy/AWS-Cloud-App#readme",
   "dependencies": {
+    "aws-sdk": "^2.553.0",
     "express": "^4.17.1",
     "node-fetch": "^2.6.0",
     "nodemon": "^1.19.4"

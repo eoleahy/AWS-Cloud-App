@@ -1,8 +1,12 @@
 "use strict";
 
 const express = require("express");
+const AWS = require("aws-sdk");
 const fs = require("fs");
 const path = require("path");
+AWS.config.update({region:"eu-west-1"});
+
+let s3 = new AWS.S3({apiVersion:"2006-03-01"});
 
 const app = express();
 const port = 3000;
