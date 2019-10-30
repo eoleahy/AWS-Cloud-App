@@ -1,4 +1,5 @@
 {
-    "bucket-name": "sample",
-    "object-key": "sample.json"
+    "accessKeyId":"123",
+    "secretAccessKey":"123132",
+    "region":"eu-west-1"
 }

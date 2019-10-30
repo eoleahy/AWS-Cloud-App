@@ -6,8 +6,9 @@ const fs = require("fs");
 const path = require("path");
 
 
+AWS.config.loadFromPath('./config.json');
 AWS.config.update({
-    region: "eu-west-1"
+    endpoint: "http://localhost:8000"
 });
 
 let s3 = new AWS.S3({
@@ -27,9 +28,47 @@ app.get('/', (req, res) => res.sendFile(publicPath + "/client.html"));
 
 app.listen(port, () => console.log(`To view webpage visit ${port}`));
 
+async function createDatabase() {
+
+    var dynamodb = new AWS.DynamoDB();
+
+    var params = {
+        TableName: "Movies",
+        KeySchema: [{
+                AttributeName: "year",
+                KeyType: "HASH"
+            },
+            {
+                AttributeName: "title",
+                KeyType: "RANGE"
+            },
+        ],
+        AttributeDefinitions: [{
+                AttributeName: "year",
+                AttributeType: "N"
+            },
+            {
+                AttributeName: "title",
+                AttributeType: "S"
+            }
+        ],
+        ProvisionedThroughput: {
+            ReadCapacityUnits: 10,
+            WriteCapacityUnits: 10
+        }
+    };
+
+
+    dynamodb.createTable(params, (err, data) => {
+        if (err) console.error("Unable to create table.");
+
+        else
+            console.log("Table created!");
+    });
+}
 
 async function getBucket() {
-    
+
     console.log("Fetching");
 
     let bucketParams = {
@@ -38,7 +77,7 @@ async function getBucket() {
 
     };
 
-    s3.getObject(bucketParams, (err, data) =>{
+    s3.getObject(bucketParams, (err, data) => {
         if (err) console.error(err);
         console.log(data.Body.toString());
     });
