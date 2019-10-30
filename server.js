@@ -6,9 +6,14 @@ const fs = require("fs");
 const path = require("path");
 
 
-AWS.config.update({region:"eu-west-1"});
+AWS.config.update({
+    region: "eu-west-1"
+});
 
-let s3 = new AWS.S3({apiVersion:"2006-03-01"});
+let s3 = new AWS.S3({
+    apiVersion: "2006-03-01"
+});
+
 
 const app = express();
 const port = 3000;
@@ -16,13 +21,30 @@ const port = 3000;
 let publicPath = path.resolve(__dirname, "public");
 app.use(express.static(publicPath));
 
-
-app.get('/:location', sendWeather);
+app.get('/create', getBucket);
 app.get('/', (req, res) => res.sendFile(publicPath + "/client.html"));
-//app.get('/:location',  getWeather);
 
 
 app.listen(port, () => console.log(`To view webpage visit ${port}`));
+
+
+async function getBucket() {
+    
+    console.log("Fetching");
+
+    let bucketParams = {
+        Bucket: 'csu44000assignment2',
+        Key: 'moviedata.json'
+
+    };
+
+    s3.getObject(bucketParams, (err, data) =>{
+        if (err) console.error(err);
+        console.log(data.Body.toString());
+    });
+}
+
+
 
 function sendWeather(req, res) {
     let loc = req.params['location'];
