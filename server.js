@@ -61,13 +61,27 @@ function createDatabase(req, res) {
     };
 
     dynamodb.createTable(params, (err, data) => {
-        if (err) console.log("Unable to create table.");
+        if (err) console.error("Failed to create table", err);
 
-        else
+        else {
             console.log("Table created!");
+            //let tableData = getBucket();
+            //console.log(tableData.Body.toString());
+        }
+        
+        let p = new Promise(() => {
 
-        res.send(data);
+            //let tableData = getBucket();
+        });
+        p.then(console.log(tableData.Body.toString()))
+            .catch(console.log("Error"));
+
+        res.send({
+            data
+        });
     });
+
+
 
 }
 
@@ -80,16 +94,16 @@ async function deleteDatabase(req, res) {
     };
 
     dynamodb.deleteTable(params, (err, data) => {
-        if (err) console.log("unable to delete");
+        if (err) console.error(err);
 
         else
             console.log("Table deleted");
 
-        res.send(data); 
+        res.send({});
     });
 }
 
-async function getBucket() {
+function getBucket() {
 
     console.log("Fetching");
 
@@ -101,9 +115,12 @@ async function getBucket() {
 
     s3.getObject(bucketParams, (err, data) => {
         if (err) console.error(err);
-        console.log(data.Body.toString());
+        //console.log(data.Body.toString());
+
+        console.log("Bucket fetched, returning data");
+        return data;
     });
-    
+
 }
 
 
@@ -123,5 +140,5 @@ function sendWeather(req, res) {
         .catch(err => {
             res.send("Error 400: Bad request");
         });
-    
+
 }

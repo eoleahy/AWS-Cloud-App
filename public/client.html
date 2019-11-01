@@ -11,16 +11,17 @@
 <body>
     <div id="app">
         <h1>AWS Cloud database app</h1>
-        <button v-on:click=create>Create database</button>
-        <br>
-        <input v-model="movieName" placeholder="Movie Name">
-        <input v-model="movieYear" placeholder="Year">
-        <button v-on:click=query>Query database</button>
-        <br>
-        <button v-on:click=deleteDB>Delete database</button>
-        <template>
+        <template v-if="!tableCreated">
+            <button v-on:click=create>Create database</button>
+            <br>
         </template>
-
+        <template v-if="tableCreated">
+            <input v-model="movieName" placeholder="Movie Name">
+            <input v-model="movieYear" placeholder="Year">
+            <button v-on:click=query>Query database</button>
+            <br>
+            <button v-on:click=deleteDB>Delete database</button>
+        </template>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <script>
@@ -45,7 +46,7 @@
             let p = fetch('/create2');
             p.then(response => response.json())
                 .then(response => {
-                    console.log(response);
+                    console.log(response.data);
                     this.tableCreated = true;
                 });
         }
@@ -59,7 +60,7 @@
             let p = fetch('/delete');
             p.then(response => response.json())
                 .then(response => {
-                    console.log(response)
+                    console.log(response.data);
                     this.tableCreated = false;
                 });
         }
