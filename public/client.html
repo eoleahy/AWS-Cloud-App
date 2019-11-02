@@ -43,7 +43,7 @@
 
 
         function createDB() {
-            let p = fetch('/create2');
+            let p = fetch('/create');
             p.then(response => response.json())
                 .then(response => {
                     console.log(response.data);

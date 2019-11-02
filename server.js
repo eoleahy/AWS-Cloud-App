@@ -22,8 +22,7 @@ const port = 3000;
 let publicPath = path.resolve(__dirname, "public");
 app.use(express.static(publicPath));
 
-app.get('/create', getBucket);
-app.get('/create2', createDatabase);
+app.get('/create', createDatabase);
 app.get('/delete', deleteDatabase);
 app.get('/', (req, res) => res.sendFile(publicPath + "/client.html"));
 
@@ -32,9 +31,9 @@ app.listen(port, () => console.log(`To view webpage visit ${port}`));
 
 function createDatabase(req, res) {
 
-    var dynamodb = new AWS.DynamoDB();
+    let dynamodb = new AWS.DynamoDB();
 
-    var params = {
+    let params = {
         TableName: "Movies",
         KeySchema: [{
                 AttributeName: "year",
@@ -54,10 +53,12 @@ function createDatabase(req, res) {
                 AttributeType: "S"
             }
         ],
-        ProvisionedThroughput: {
-            ReadCapacityUnits: 10,
-            WriteCapacityUnits: 10
-        }
+        BillingMode: "PAY_PER_REQUEST"
+    };
+
+    let bucketParams = {
+        Bucket: 'csu44000assignment2',
+        Key: 'moviedata.json'
     };
 
     dynamodb.createTable(params, (err, data) => {
@@ -65,24 +66,52 @@ function createDatabase(req, res) {
 
         else {
             console.log("Table created!");
-            //let tableData = getBucket();
-            //console.log(tableData.Body.toString());
+
         }
-        
-        let p = new Promise(() => {
+    });
 
-            //let tableData = getBucket();
-        });
-        p.then(console.log(tableData.Body.toString()))
-            .catch(console.log("Error"));
+    console.log("Fetching");
 
-        res.send({
-            data
-        });
+    s3.getObject(bucketParams, (err, data) => {
+        if (err) console.error(err);
+
+
+        else {
+            let items = JSON.parse(data.Body.toString());
+            //console.log(items);
+            console.log("Bucket fetched, uploading data");
+
+            let docClient = new AWS.DynamoDB.DocumentClient();
+            
+            
+            for (const item of items) {
+
+                //console.log(item);
+
+                let params = {
+                    TableName: "Movies",
+                    Item: item
+                }
+
+                //console.log(item["title"]);
+                
+                docClient.put(params, function (err, data) {
+                    if (err) {
+                        console.error("Unable to add item.");
+                    } else {
+                        console.log("Added item:", params["Item"]["title"]);
+                    }
+                });
+                
+            }
+            
+            console.log("Added everything")
+            
+        }
     });
 
 
-
+    res.send({});
 }
 
 async function deleteDatabase(req, res) {
@@ -103,25 +132,7 @@ async function deleteDatabase(req, res) {
     });
 }
 
-function getBucket() {
 
-    console.log("Fetching");
-
-    let bucketParams = {
-        Bucket: 'csu44000assignment2',
-        Key: 'moviedata.json'
-
-    };
-
-    s3.getObject(bucketParams, (err, data) => {
-        if (err) console.error(err);
-        //console.log(data.Body.toString());
-
-        console.log("Bucket fetched, returning data");
-        return data;
-    });
-
-}
 
 
 
