@@ -54,6 +54,12 @@
         function queryDB() {
             let name = this.movieName;
             let year = this.movieYear;
+
+            let p = fetch(`/query/${name}/${year}`);
+            p.then(response => response.json())
+                .then(response => {
+                    console.log(response.data);
+                });
         }
 
         function deleteDB() {

@@ -24,6 +24,7 @@ app.use(express.static(publicPath));
 
 app.get('/create', createDatabase);
 app.get('/delete', deleteDatabase);
+app.get('/query/:name/:year', queryDatabase);
 app.get('/', (req, res) => res.sendFile(publicPath + "/client.html"));
 
 
@@ -56,61 +57,106 @@ function createDatabase(req, res) {
         BillingMode: "PAY_PER_REQUEST"
     };
 
-    let bucketParams = {
-        Bucket: 'csu44000assignment2',
-        Key: 'moviedata.json'
-    };
+    let p = new Promise((resolve, reject) => {
 
-    dynamodb.createTable(params, (err, data) => {
-        if (err) console.error("Failed to create table", err);
+        dynamodb.createTable(params, (err, data) => {
+            if (err)
+                reject(console.error("Failed to create table", err));
 
-        else {
-            console.log("Table created!");
-
-        }
+            else {
+                console.log("Table created!");
+                resolve(data);
+            }
+        });
     });
 
-    console.log("Fetching");
+    p.then(() => {
+        console.log("Fetching...");
+        let bucketParams = {
+            Bucket: 'csu44000assignment2',
+            Key: 'moviedata.json'
+        };
 
-    s3.getObject(bucketParams, (err, data) => {
-        if (err) console.error(err);
+        s3.getObject(bucketParams, (err, data) => {
+            if (err) console.error(err);
 
 
-        else {
-            let items = JSON.parse(data.Body.toString());
-            //console.log(items);
-            console.log("Bucket fetched, uploading data");
+            else {
+                let items = JSON.parse(data.Body.toString());
+                //console.log(items);
+                console.log("Bucket fetched, uploading data");
 
-            let docClient = new AWS.DynamoDB.DocumentClient();
-            
-            
-            for (const item of items) {
+                let docClient = new AWS.DynamoDB.DocumentClient();
 
-                //console.log(item);
 
-                let params = {
-                    TableName: "Movies",
-                    Item: item
+                for (const item of items) {
+
+                    //console.log(item);
+
+                    let params = {
+                        TableName: "Movies",
+                        Item: item
+                    }
+
+                    //console.log(item["title"]);
+
+                    docClient.put(params, function (err, data) {
+                        if (err) {
+                            console.error("Unable to add item.");
+                        } else {
+                            //console.log("Added item:", params["Item"]["title"]);
+                        }
+                    });
+
                 }
 
-                //console.log(item["title"]);
-                
-                docClient.put(params, function (err, data) {
-                    if (err) {
-                        console.error("Unable to add item.");
-                    } else {
-                        console.log("Added item:", params["Item"]["title"]);
-                    }
-                });
-                
+                console.log("Added everything")
+
             }
-            
-            console.log("Added everything")
-            
+        });
+
+
+
+
+    }).catch((mesg) => {
+        console.log("Promise failed");
+    })
+
+
+  
+    res.send({});
+}
+
+function queryDatabase(req, res){
+
+    let docClient = new AWS.DynamoDB.DocumentClient();
+
+    let name = req.params['name'];
+    let year = req.params['year'];
+
+    let params = {
+        TableName:"Movies",
+        KeyConditionExpression: "#yr= :yyyy" ,
+        ExpressionAttributeNames:{
+            "#yr":"year"
+        },
+        ExpressionAttributeValues: {
+            ":yyyy":year
         }
-    });
+    };
 
-
+    docClient.query(params, (err, data) =>{
+        if(err){
+            console.error("Unable to query.");
+            console.log(err)
+        }
+        else{
+            console.log("Query succeeded");
+            data.Items.forEach(function(item) {
+                console.log(" -", item.year + ": " + item.title);
+            });
+        }
+    })
     res.send({});
 }
 
