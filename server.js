@@ -78,12 +78,11 @@ function createDatabase(req, res) {
         };
 
         s3.getObject(bucketParams, (err, data) => {
-            if (err) console.error(err);
-
-
-            else {
+            if (err) {
+                console.error(err);
+                //res.send("Error 400: Bad Request");
+            } else {
                 let items = JSON.parse(data.Body.toString());
-                //console.log(items);
                 console.log("Bucket fetched, uploading data");
 
                 let docClient = new AWS.DynamoDB.DocumentClient();
@@ -91,20 +90,23 @@ function createDatabase(req, res) {
 
                 for (const item of items) {
 
-                    //console.log(item);
 
                     let params = {
                         TableName: "Movies",
-                        Item: item
-                    }
+                        Item: {
+                            "year": item["year"],
+                            "title": item["title"],
+                            "info": item["info"]
+                        }
 
-                    //console.log(item["title"]);
+                    };
 
                     docClient.put(params, function (err, data) {
                         if (err) {
-                            console.error("Unable to add item.");
+
+                            //res.send("Error 400: Bad Request");
                         } else {
-                            //console.log("Added item:", params["Item"]["title"]);
+                            //console.log("Added item:", JSON.stringify(data, null, 2));
                         }
                     });
 
@@ -115,49 +117,48 @@ function createDatabase(req, res) {
             }
         });
 
-
-
-
-    }).catch((mesg) => {
-        console.log("Promise failed");
+    }).catch(function () {
+        //res.send("Error 400: Bad Request");
     })
 
 
-  
+
     res.send({});
 }
 
-function queryDatabase(req, res){
+function queryDatabase(req, res) {
+
+    console.log("Query called");
 
     let docClient = new AWS.DynamoDB.DocumentClient();
 
     let name = req.params['name'];
-    let year = req.params['year'];
+    let year = parseInt(req.params['year']);
 
     let params = {
-        TableName:"Movies",
-        KeyConditionExpression: "#yr= :yyyy" ,
-        ExpressionAttributeNames:{
-            "#yr":"year"
+        TableName: "Movies",
+        KeyConditionExpression: "#yr = :yyyy and title = :t",
+        ExpressionAttributeNames: {
+            "#yr": "year"
         },
         ExpressionAttributeValues: {
-            ":yyyy":year
+            ":yyyy": year,
+            ":t": name
         }
     };
 
-    docClient.query(params, (err, data) =>{
-        if(err){
-            console.error("Unable to query.");
-            console.log(err)
-        }
-        else{
-            console.log("Query succeeded");
-            data.Items.forEach(function(item) {
-                console.log(" -", item.year + ": " + item.title);
+
+    docClient.query(params, function (err, data) {
+        if (err) {
+            console.log("Unable to query. Error:", JSON.stringify(err, null, 2));
+            res.send("Error 400: Bad Request");
+        } else {
+            console.log("Query succeeded.", JSON.stringify(data, null, 2));
+            res.send({
+                data
             });
         }
-    })
-    res.send({});
+    });
 }
 
 async function deleteDatabase(req, res) {
@@ -168,18 +169,17 @@ async function deleteDatabase(req, res) {
         TableName: "Movies"
     };
 
+
     dynamodb.deleteTable(params, (err, data) => {
-        if (err) console.error(err);
-
-        else
+        if (err) {
+            console.error(err);
+        } else {
             console.log("Table deleted");
+        }
 
-        res.send({});
     });
+    res.send({});
 }
-
-
-
 
 
 function sendWeather(req, res) {
