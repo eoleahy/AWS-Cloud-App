@@ -11,25 +11,27 @@
 <body>
     <div id="app">
         <h1>AWS Cloud database app</h1>
-        <template v-if="!tableCreated">
-            <button v-on:click=create>Create database</button>
-            <br>
+
+        <button v-on:click=create>Create database</button>
+        <br>
+        <button v-on:click=query>Query database</button>
+        <input v-model="movieName" placeholder="Movie Name">
+        <input v-model="movieYear" placeholder="Year">
+        <br>
+        <button v-on:click=deleteDB>Delete database</button>
+        <br>
         </template>
         <template v-if="tableCreated">
-                <button v-on:click=query>Query database</button>
-            <input v-model="movieName" placeholder="Movie Name">
-            <input v-model="movieYear" placeholder="Year">
-            <br>
-            <button v-on:click=deleteDB>Delete database</button>
-            <br>
+
             <div class="movieInfo">
-                
+
                 <p v-for="item in movieData">
                     {{item}}
                 </p>
-                <img v-bind:src="imageSrc"></div>
+                <img v-bind:src="imageSrc">
             </div>
-        </template>
+    </div>
+    </template>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <script>
