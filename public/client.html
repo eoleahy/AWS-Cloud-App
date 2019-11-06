@@ -21,7 +21,7 @@
         <button v-on:click=deleteDB>Delete database</button>
         <br>
         </template>
-        <template v-if="tableCreated">
+        
 
             <div class="movieInfo">
 
@@ -58,8 +58,11 @@
             let p = fetch('/create');
             p.then(response => response.json())
                 .then(response => {
-                    console.log(response.data);
-                    this.tableCreated = true;
+                    if (response["message"] == "Ok") {
+                        this.tableCreated = true;
+                        console.log("Database created and data uploaded!");
+                    } else
+                        console.log(response["message"]);
                 });
         }
 
@@ -72,14 +75,17 @@
                 .then(response => {
 
                     //console.log(response.data.Items["year"]);
-
-                    let movie = response.data.Items;
-                    console.log(movie);
-                    this.imageSrc = movie[0]["info"]["image_url"];
-                    console.log(this.imageSrc);
-                    this.movieYear = null;
-                    this.movieName = null;
-                    this.movieData = movie[0]["info"];
+                    if (response["message"] === "Error 400: Bad Request") {
+                        console.log("Query Failed");
+                    } else {
+                        let movie = response.data.Items;
+                        console.log(movie);
+                        this.imageSrc = movie[0]["info"]["image_url"];
+                        console.log(this.imageSrc);
+                        this.movieYear = null;
+                        this.movieName = null;
+                        this.movieData = movie[0]["info"];
+                    }
                 });
         }
 
@@ -87,10 +93,16 @@
             let p = fetch('/delete');
             p.then(response => response.json())
                 .then(response => {
-                    console.log("Table deleted");
-                    this.tableCreated = false;
-                    this.imageSrc = null;
-                    this.movieData = null;
+
+                    if(response["message"] === "Ok"){
+                        console.log("Table deleted");
+                        this.tableCreated = false;
+                        this.imageSrc = null;
+                        this.movieData = null;
+                    }
+                    else{
+                        console.log("Failed to delete table");
+                    }
                 });
         }
     </script>

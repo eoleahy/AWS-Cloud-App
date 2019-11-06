@@ -30,7 +30,7 @@ app.get('/', (req, res) => res.sendFile(publicPath + "/client.html"));
 
 app.listen(port, () => console.log(`To view webpage visit ${port}`));
 
-function createDatabase(req, res) {
+function createDatabase(req, res, next) {
 
     let dynamodb = new AWS.DynamoDB();
 
@@ -57,73 +57,65 @@ function createDatabase(req, res) {
         BillingMode: "PAY_PER_REQUEST"
     };
 
-    let p = new Promise((resolve, reject) => {
+    dynamodb.createTable(params, (err, data) => {
+        if (err) {
+            console.log("Error creating table, it already exists");
+            res.send({
+                message: "Error 400 : Bad Request"
+            });
+        } else {
 
-        dynamodb.createTable(params, (err, data) => {
-            if (err)
-                reject(console.error("Failed to create table", err));
+            console.log("Table created, Fetching data...");
+            let bucketParams = {
+                Bucket: 'csu44000assignment2',
+                Key: 'moviedata.json'
+            };
 
-            else {
-                console.log("Table created!");
-                resolve(data);
-            }
-        });
-    });
-
-    p.then(() => {
-        console.log("Fetching...");
-        let bucketParams = {
-            Bucket: 'csu44000assignment2',
-            Key: 'moviedata.json'
-        };
-
-        s3.getObject(bucketParams, (err, data) => {
-            if (err) {
-                console.error(err);
-                //res.send("Error 400: Bad Request");
-            } else {
-                let items = JSON.parse(data.Body.toString());
-                console.log("Bucket fetched, uploading data");
-
-                let docClient = new AWS.DynamoDB.DocumentClient();
-
-
-                for (const item of items) {
-
-
-                    let params = {
-                        TableName: "Movies",
-                        Item: {
-                            "year": item["year"],
-                            "title": item["title"],
-                            "info": item["info"]
-                        }
-
-                    };
-
-                    docClient.put(params, function (err, data) {
-                        if (err) {
-
-                            //res.send("Error 400: Bad Request");
-                        } else {
-                            //console.log("Added item:", JSON.stringify(data, null, 2));
-                        }
+            s3.getObject(bucketParams, (err, data) => {
+                if (err) {
+                    console.error("Error fetching bucket");
+                    res.send({
+                        message: "Couldn't fetch bucket!"
                     });
+                } else {
 
+                    let items = JSON.parse(data.Body.toString());
+                    console.log("Bucket fetched, uploading data...");
+
+                    let docClient = new AWS.DynamoDB.DocumentClient();
+
+
+                    for (const item of items) {
+
+                        let params = {
+                            TableName: "Movies",
+                            Item: {
+                                "year": item["year"],
+                                "title": item["title"],
+                                "info": item["info"]
+                            }
+
+                        };
+
+                        docClient.put(params, function (err, data) {
+                            if (err) {
+
+                                console.log("Could not add item to database!");
+                            } else {
+                                //console.log("Added item:", JSON.stringify(data, null, 2));
+                            }
+                        });
+
+                    }
+
+                    console.log("Added everything to database...")
+                    res.send({
+                        message: "Ok"
+                    });
                 }
-
-                console.log("Added everything")
-
-            }
-        });
-
-    }).catch(function () {
-        //res.send("Error 400: Bad Request");
-    })
-
-
-
-    res.send({});
+            });
+        }
+    });
 }
 
 function queryDatabase(req, res) {
@@ -151,13 +143,25 @@ function queryDatabase(req, res) {
     docClient.query(params, function (err, data) {
         if (err) {
             console.log("Unable to query. Error:", JSON.stringify(err, null, 2));
-            res.send("Error 400: Bad Request");
-        } else {
-            console.log("Query succeeded.", JSON.stringify(data, null, 2));
             res.send({
-                data
+                message: "Error 400: Bad Request"
             });
-        }
+        } else {
+
+            if (data["Count"] > 0) {
+                console.log("Query succeeded.", data);
+                res.send({
+                    data
+                });
+            } else {
+                console.log("Failed Query");
+
+                res.send({
+                    message: "Error 400: Bad Request"
+                });
+            }
+        };
+
     });
 }
 
@@ -172,30 +176,16 @@ async function deleteDatabase(req, res) {
 
     dynamodb.deleteTable(params, (err, data) => {
         if (err) {
-            console.error(err);
+            console.log("Failed to delete database");
+            res.send({
+                message: "Error 400: Bad Request"
+            })
         } else {
             console.log("Table deleted");
+            res.send({
+                message: "Ok"
+            });
         }
 
     });
-    res.send({});
-}
-
-
-function sendWeather(req, res) {
-    let loc = req.params['location'];
-    //console.log(loc);
-    let reqStr = "";
-
-    let p = fetch(reqStr)
-    p.then(res => res.json())
-        .then(data => {
-            res.send({
-                data
-            });
-        })
-        .catch(err => {
-            res.send("Error 400: Bad request");
-        });
-
 }
