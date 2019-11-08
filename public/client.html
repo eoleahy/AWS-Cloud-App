@@ -21,15 +21,17 @@
         <button v-on:click=deleteDB>Delete database</button>
         <br>
         </template>
-        
+        <span v-if="receivedData">
+              
+            <table id= infoTable>
+                <tr v-for="i in 8">
+                   <td>{{rowNames[i-1]}} </td> 
+                   <td>{{movieData[i-1]}}</td>
+                </tr>
+            </table>
+        </span>
+        <img v-bind:src="imageSrc">
 
-            <div class="movieInfo">
-
-                <p v-for="item in movieData">
-                    {{item}}
-                </p>
-                <img v-bind:src="imageSrc">
-            </div>
     </div>
     </template>
     </div>
@@ -39,9 +41,13 @@
             el: '#app',
             data: {
                 message: "Hello test",
+                receivedData: false,
                 search: "",
                 movieName: "",
                 movieYear: "",
+                rowNames: ["Title", "Release Year", "Plot", "Genres", "Actors", "Director(s)", "Rating",
+                    "Running Time(mins)"
+                ],
                 tableCreated: false,
                 movieData: [],
                 imageSrc: ''
@@ -58,7 +64,7 @@
             let p = fetch('/create');
             p.then(response => response.json())
                 .then(response => {
-                    if (response["message"] == "Ok") {
+                    if (response["message"] === "Ok") {
                         this.tableCreated = true;
                         console.log("Database created and data uploaded!");
                     } else
@@ -78,13 +84,24 @@
                     if (response["message"] === "Error 400: Bad Request") {
                         console.log("Query Failed");
                     } else {
+                        this.receivedData = true;
+
                         let movie = response.data.Items;
-                        console.log(movie);
+                        let movieInfo = [];
+                        movieInfo.push(movie[0]["title"]);
+                        movieInfo.push(movie[0]["year"]);
+                        movieInfo.push(movie[0]["info"]["plot"]);
+                        movieInfo.push(movie[0]["info"]["genres"].toString());
+                        movieInfo.push(movie[0]["info"]["actors"].toString());
+                        movieInfo.push(movie[0]["info"]["directors"].toString());
+                        movieInfo.push(movie[0]["info"]["rating"]);
+                        movieInfo.push(movie[0]["info"]["running_time_secs"] / 60);
+
+                        this.movieYear = null; //Clear search box
+                        this.movieName = null; //Clear search box
+                        this.movieData = movieInfo;
                         this.imageSrc = movie[0]["info"]["image_url"];
-                        console.log(this.imageSrc);
-                        this.movieYear = null;
-                        this.movieName = null;
-                        this.movieData = movie[0]["info"];
+                        //this.len = this.movieData.length
                     }
                 });
         }
@@ -94,13 +111,13 @@
             p.then(response => response.json())
                 .then(response => {
 
-                    if(response["message"] === "Ok"){
+                    if (response["message"] === "Ok") {
                         console.log("Table deleted");
                         this.tableCreated = false;
                         this.imageSrc = null;
                         this.movieData = null;
-                    }
-                    else{
+                        this.receivedData = false;
+                    } else {
                         console.log("Failed to delete table");
                     }
                 });
