@@ -17,7 +17,7 @@ let s3 = new AWS.S3({
 
 
 const app = express();
-const port = 3000;
+const port = 80;
 
 let publicPath = path.resolve(__dirname, "public");
 app.use(express.static(publicPath));
