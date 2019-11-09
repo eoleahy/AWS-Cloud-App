@@ -144,7 +144,7 @@ function queryDatabase(req, res) {
 
     let params = {
         TableName: "Movies",
-        KeyConditionExpression: "#yr = :yyyy and title = :t",
+        KeyConditionExpression: "#yr = :yyyy and begins_with(title, :t)",
         ExpressionAttributeNames: {
             "#yr": "year"
         },

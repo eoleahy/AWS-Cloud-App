@@ -16,26 +16,35 @@
         <p v-else>The table is not created!</p>
 
         <button v-on:click=create>Create database</button>
+        <button v-on:click=deleteDB>Delete database</button>
         <br>
         <button v-on:click=query>Query database</button>
         <input v-model="movieName" placeholder="Movie Name">
         <input v-model="movieYear" placeholder="Year">
         <br>
-        <button v-on:click=deleteDB>Delete database</button>
+        <p v-if="badInput">No results, try again.</p>
         <br>
         <span v-if="receivedData">
-            <div class=movieInfo>
-                <table class=infoTable>
-                    <tr v-for="i in 8">
-                        <td>{{rowNames[i-1]}} </td>
-                        <td>{{movieData[i-1]}}</td>
-                    </tr>
-                </table>
+            <div class=lists v-for="item in movieData">
+
+                <div class=movieInfo>
+                    <table class=infoTable>
+                        <tr v-for="i in 8">
+                            <td>{{rowNames[i-1]}} </td>
+                            <td>{{item[i-1]}}</td>
+                        </tr>
+                    </table>
+                    <div class=imageDiv>
+                        <img v-bind:src="item[8]">
+                    </div>
+                </div>
+
             </div>
         </span>
-        <div class=imageDiv>
-            <img v-bind:src="imageSrc">
-        </div>
+    </div>
+
+
+
     </div>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <script>
@@ -50,12 +59,14 @@
                 receivedData: false,
                 search: "",
                 movieName: "",
+                len: 0,
+                badInput: false,
                 movieYear: "",
                 rowNames: ["Title", "Release Year", "Plot", "Genres", "Actors", "Director(s)", "Rating",
                     "Running Time(mins)"
                 ],
                 movieData: [],
-                imageSrc: ''
+                imageSrcArr: [],
             },
             methods: {
                 create: createDB,
@@ -88,24 +99,31 @@
 
                     if (response["message"] === "Error 400: Bad Request") {
                         console.log("Query Failed");
+                        this.badInput=true;
                     } else {
+                        this.badInput=false;
                         this.receivedData = true;
+                        this.movieData = [];
 
-                        let movie = response.data.Items;
-                        let movieInfo = [];
-                        movieInfo.push(movie[0]["title"]);
-                        movieInfo.push(movie[0]["year"]);
-                        movieInfo.push(movie[0]["info"]["plot"]);
-                        movieInfo.push(movie[0]["info"]["genres"].toString());
-                        movieInfo.push(movie[0]["info"]["actors"].toString());
-                        movieInfo.push(movie[0]["info"]["directors"].toString());
-                        movieInfo.push(movie[0]["info"]["rating"]);
-                        movieInfo.push(movie[0]["info"]["running_time_secs"] / 60);
+                        let movies = response.data.Items;
+                        let numMovies = 0;
 
-                        this.movieYear = null; //Clear search box
-                        this.movieName = null; //Clear search box
-                        this.movieData = movieInfo;
-                        this.imageSrc = movie[0]["info"]["image_url"];
+                        for (const movie of movies) {
+
+                            numMovies++;
+                            let movieInfo = [];
+                            movieInfo.push(movie["title"]);
+                            movieInfo.push(movie["year"]);
+                            movieInfo.push(movie["info"]["plot"]);
+                            movieInfo.push(movie["info"]["genres"].toString());
+                            movieInfo.push(movie["info"]["actors"].toString());
+                            movieInfo.push(movie["info"]["directors"].toString());
+                            movieInfo.push(movie["info"]["rating"]);
+                            movieInfo.push(movie["info"]["running_time_secs"] / 60);
+                            movieInfo.push(movie["info"]["image_url"]);
+                            this.movieData.push(movieInfo);
+                        }
+                        this.len = numMovies;
                     }
                 });
         }
@@ -127,7 +145,7 @@
                 });
         }
         //Function called on window load to check if the table already exists
-        function checkDB() { 
+        function checkDB() {
 
             let p = fetch('/check');
             p.then(response => response.json())
