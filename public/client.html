@@ -12,6 +12,9 @@
     <div id="app">
         <h1>AWS Cloud database app</h1>
 
+        <p v-if="tableCreated">The table is created!</p>
+        <p v-else>The table is not created!</p>
+
         <button v-on:click=create>Create database</button>
         <br>
         <button v-on:click=query>Query database</button>
@@ -20,26 +23,29 @@
         <br>
         <button v-on:click=deleteDB>Delete database</button>
         <br>
-        </template>
         <span v-if="receivedData">
-              
-            <table id= infoTable>
-                <tr v-for="i in 8">
-                   <td>{{rowNames[i-1]}} </td> 
-                   <td>{{movieData[i-1]}}</td>
-                </tr>
-            </table>
+            <div class=movieInfo>
+                <table class=infoTable>
+                    <tr v-for="i in 8">
+                        <td>{{rowNames[i-1]}} </td>
+                        <td>{{movieData[i-1]}}</td>
+                    </tr>
+                </table>
+            </div>
         </span>
-        <img v-bind:src="imageSrc">
-
-    </div>
-    </template>
+        <div class=imageDiv>
+            <img v-bind:src="imageSrc">
+        </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <script>
         var app = new Vue({
             el: '#app',
+            mounted: function () {
+                this.check();
+            },
             data: {
+                tableCreated: false,
                 message: "Hello test",
                 receivedData: false,
                 search: "",
@@ -48,7 +54,6 @@
                 rowNames: ["Title", "Release Year", "Plot", "Genres", "Actors", "Director(s)", "Rating",
                     "Running Time(mins)"
                 ],
-                tableCreated: false,
                 movieData: [],
                 imageSrc: ''
             },
@@ -56,6 +61,7 @@
                 create: createDB,
                 query: queryDB,
                 deleteDB: deleteDB,
+                check: checkDB
             }
         })
 
@@ -80,7 +86,6 @@
             p.then(response => response.json())
                 .then(response => {
 
-                    //console.log(response.data.Items["year"]);
                     if (response["message"] === "Error 400: Bad Request") {
                         console.log("Query Failed");
                     } else {
@@ -101,7 +106,6 @@
                         this.movieName = null; //Clear search box
                         this.movieData = movieInfo;
                         this.imageSrc = movie[0]["info"]["image_url"];
-                        //this.len = this.movieData.length
                     }
                 });
         }
@@ -120,6 +124,17 @@
                     } else {
                         console.log("Failed to delete table");
                     }
+                });
+        }
+
+        function checkDB() { //Function called on window load to check if the table already exists
+
+            let p = fetch('/check');
+            p.then(response => response.json())
+                .then(response => {
+                    console.log(response["exist"]);
+                    this.tableCreated = response["exist"];
+
                 });
         }
     </script>

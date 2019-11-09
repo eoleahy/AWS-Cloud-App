@@ -22,15 +22,33 @@ const port = 3000;
 let publicPath = path.resolve(__dirname, "public");
 app.use(express.static(publicPath));
 
+app.get('/check', checkDB);
 app.get('/create', createDatabase);
 app.get('/delete', deleteDatabase);
 app.get('/query/:name/:year', queryDatabase);
 app.get('/', (req, res) => res.sendFile(publicPath + "/client.html"));
 
-
 app.listen(port, () => console.log(`To view webpage visit ${port}`));
 
-function createDatabase(req, res, next) {
+function checkDB(req, res) {
+
+    let exists = false;
+    let dynamodb = new AWS.DynamoDB();
+    var params = {
+        TableName: "Movies" /* required */
+    };
+    dynamodb.describeTable(params, function (err, data) {
+        if (err) {
+            console.log("Doesn't exist"); // an error occurred
+            res.json({exist:false});
+        } else {
+            console.log("Exists"); // successful response
+            res.json({exist:true});
+        }
+    });
+}
+
+function createDatabase(req, res) {
 
     let dynamodb = new AWS.DynamoDB();
 
@@ -100,7 +118,7 @@ function createDatabase(req, res, next) {
                         docClient.put(params, function (err, data) {
                             if (err) {
 
-                                console.log("Could not add item to database!");
+                                //console.log("Could not add item to database!");
                             } else {
                                 //console.log("Added item:", JSON.stringify(data, null, 2));
                             }
@@ -165,7 +183,7 @@ function queryDatabase(req, res) {
     });
 }
 
-async function deleteDatabase(req, res) {
+function deleteDatabase(req, res) {
 
     let dynamodb = new AWS.DynamoDB();
 
