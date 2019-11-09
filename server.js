@@ -7,9 +7,6 @@ const path = require("path");
 
 
 AWS.config.loadFromPath('./config.json');
-//AWS.config.update({
-//    endpoint: "http://localhost:8000"
-//});
 
 let s3 = new AWS.S3({
     apiVersion: "2006-03-01"
@@ -30,20 +27,23 @@ app.get('/', (req, res) => res.sendFile(publicPath + "/client.html"));
 
 app.listen(port, () => console.log(`To view webpage visit ${port}`));
 
+//Function to check if the database exists upon page load
 function checkDB(req, res) {
 
-    let exists = false;
     let dynamodb = new AWS.DynamoDB();
     var params = {
-        TableName: "Movies" /* required */
+        TableName: "Movies"
     };
+    //If there is an error then the table does not exist so we return a flag
     dynamodb.describeTable(params, function (err, data) {
         if (err) {
-            console.log("Doesn't exist"); // an error occurred
-            res.json({exist:false});
+            res.json({
+                exist: false
+            });
         } else {
-            console.log("Exists"); // successful response
-            res.json({exist:true});
+            res.json({
+                exist: true
+            });
         }
     });
 }
@@ -78,7 +78,7 @@ function createDatabase(req, res) {
     dynamodb.createTable(params, (err, data) => {
         if (err) {
             console.log("Error creating table, it already exists");
-            res.send({
+            res.json({
                 message: "Error 400 : Bad Request"
             });
         } else {
@@ -92,7 +92,7 @@ function createDatabase(req, res) {
             s3.getObject(bucketParams, (err, data) => {
                 if (err) {
                     console.error("Error fetching bucket");
-                    res.send({
+                    res.json({
                         message: "Couldn't fetch bucket!"
                     });
                 } else {
@@ -102,7 +102,7 @@ function createDatabase(req, res) {
 
                     let docClient = new AWS.DynamoDB.DocumentClient();
 
-
+                    // For every item received from bucket upload
                     for (const item of items) {
 
                         let params = {
@@ -117,15 +117,12 @@ function createDatabase(req, res) {
 
                         docClient.put(params, function (err, data) {
                             if (err) {
-
                                 //console.log("Could not add item to database!");
                             } else {
                                 //console.log("Added item:", JSON.stringify(data, null, 2));
                             }
                         });
-
                     }
-
                     console.log("Added everything to database...")
                     res.send({
                         message: "Ok"

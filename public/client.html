@@ -42,7 +42,7 @@
         var app = new Vue({
             el: '#app',
             mounted: function () {
-                this.check();
+                this.check(); // On page load call function
             },
             data: {
                 tableCreated: false,
@@ -126,15 +126,13 @@
                     }
                 });
         }
-
-        function checkDB() { //Function called on window load to check if the table already exists
+        //Function called on window load to check if the table already exists
+        function checkDB() { 
 
             let p = fetch('/check');
             p.then(response => response.json())
                 .then(response => {
-                    console.log(response["exist"]);
                     this.tableCreated = response["exist"];
-
                 });
         }
     </script>
